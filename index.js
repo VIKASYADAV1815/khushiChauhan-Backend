@@ -14,17 +14,15 @@ import { generateUuid } from './middlewares/generateUuid.js'; // <-- added
 const app = express();
 
 // Middlewares
-// origin list can include Render domain and later custom domains
+// Origin list can include Render domain and later custom domains
 const allowedOrigins = [
-  'http://localhost:3000',
-  'https://fashion-designer-one.vercel.app',
-  'https://khushichauhandesignerstudio.com',
-  
-  process.env.FRONTEND_URL,          // e.g. https://www.yoursite.com
+  process.env.FRONTEND_URL, // e.g. https://khushichauhandesignerstudio.com
+  process.env.FRONTEND_URL_WWW, // e.g. https://www.khushichauhandesignerstudio.com (optional)
 ].filter(Boolean);
 
-// simple debug log showing which origins are allowed (omit in production if you prefer)
-console.log('Allowed CORS origins:', allowedOrigins);
+if (process.env.NODE_ENV !== "production") {
+  allowedOrigins.push("http://localhost:3000");
+}
 
 app.use(cors({
   origin: (origin, callback) => {
