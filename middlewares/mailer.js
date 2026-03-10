@@ -241,15 +241,15 @@ export const sendAdminEmail = async (order) => {
 
         <!-- Footer -->
         <div style="background: #F9FAFB; padding: 20px; text-align: center; color: #999; font-size: 11px; border-radius: 0 0 12px 12px; border: 1px solid #E5E7EB; border-top: none;">
-          <p style="margin: 0;">© 2026 BakeMasters Admin Portal</p>
+          <p style="margin: 0;">© 2026 Khushi Chauhan Designer Studio</p>
         </div>
       </div>
     `;
 
     await resend.emails.send({
-      from: "Bake Masters <noreply@bakemasters.in>",
-      to: "rohitrankmantra12@gmail.com",
-      subject: `🧁 New Order Received - ${order._id}`,
+      from: process.env.RESEND_FROM_ADMIN || process.env.RESEND_FROM || "Khushi Chauhan Designer Studio <onboarding@resend.dev>",
+      to: (process.env.ADMIN_EMAIL || "").split(",").map((s) => s.trim()).filter(Boolean),
+      subject: `✨ New Order Received - ${order._id}`,
       html: emailBody,
     });
     return true;
