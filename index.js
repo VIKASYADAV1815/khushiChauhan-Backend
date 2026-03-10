@@ -57,10 +57,14 @@ app.use('/api/cart', cartRoutes);
 app.use("/api/orders", orderRoutes);
 
 
-// Test route
-app.get('/', (req, res) => res.send('Backend is running!'));
+// Health route (Render)
+app.get("/", (req, res) => {
+  res.send("Backend is running");
+});
 
 
 // Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
