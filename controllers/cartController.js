@@ -99,6 +99,20 @@ export const getCart = async (req, res) => {
   }
 };
 
+export const clearCart = async (req, res) => {
+  try {
+    const uuid = req.visitorUuid;
+    if (!uuid) return res.status(400).json({ message: "Visitor UUID missing" });
+
+    await Cart.findOneAndDelete({ uuid });
+
+    return res.status(200).json({ message: "Cart cleared" });
+  } catch (error) {
+    console.error("Error clearing cart:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 // ❌ Remove ONLY ONE item by _id
 export const removeItem = async (req, res) => {

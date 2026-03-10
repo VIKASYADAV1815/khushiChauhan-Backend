@@ -14,59 +14,120 @@ export const generateOTP = () => {
 // 📧 Send OTP via email
 export const sendOTPEmail = async (email, otp, name) => {
   try {
-    const emailBody = `
-      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%); padding: 0; border-radius: 12px; overflow: hidden;">
-        <!-- Header with gradient -->
-        <div style="background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%); padding: 40px 20px; text-align: center; color: white;">
-          <h1 style="margin: 0; font-size: 36px; font-weight: 700; letter-spacing: 1px;">🧁 BakeMasters</h1>
-          <p style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;">Freshly Baked Goodness</p>
-        </div>
+    if (!process.env.RESEND_API_KEY) {
+      console.error("RESEND_API_KEY is missing. OTP email not sent.");
+      return { ok: false, error: "Email service not configured" };
+    }
 
-        <!-- Main content -->
-        <div style="background: white; padding: 40px 30px;">
-          <h2 style="color: #7C3AED; margin: 0 0 10px 0; font-size: 24px;">Welcome to BakeMasters!</h2>
-          <p style="color: #666; margin: 0 0 20px 0; font-size: 14px; line-height: 1.6;">Hi <strong>${name}</strong>,</p>
-          
-          <p style="color: #555; margin: 0 0 30px 0; font-size: 14px; line-height: 1.6;">
-            Thank you for joining us! We're thrilled to have you as part of our BakeMasters family. To complete your email verification and unlock all the delicious treats we have to offer, please use the verification code below:
-          </p>
+    const safeName = (name || "").toString().trim() || "there";
+    const safeEmail = (email || "").toString().trim();
+    if (!safeEmail) return { ok: false, error: "Missing recipient email" };
 
-          <!-- OTP Box -->
-          <div style="background: linear-gradient(135deg, #F3E8FF 0%, #EDE9FE 100%); padding: 30px; border-radius: 10px; text-align: center; border: 2px solid #7C3AED; margin: 0 0 30px 0;">
-            <p style="color: #666; margin: 0 0 10px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Your Verification Code</p>
-            <p style="margin: 0; font-size: 42px; font-weight: 800; color: #7C3AED; letter-spacing: 8px; font-family: 'Courier New', monospace;">${otp}</p>
+    // Resend "testing" mode only allows sending to a single verified recipient.
+    // In development, allow routing all OTP emails to a safe inbox.
+    const devOverrideTo =
+      process.env.NODE_ENV === "development" && process.env.RESEND_TEST_TO
+        ? process.env.RESEND_TEST_TO.toString().trim()
+        : "";
+    const otpDigits = otp.toString().split("").slice(0, 6);
+
+    const previewText = `Your Khushi Chauhan Designer Studio verification code is ${otpDigits.join("")}. This code expires in 10 minutes.`;
+
+    const html = `
+      <div style="margin:0;padding:0;background:#FAF9F6;">
+        <div style="max-width:520px;margin:0 auto;padding:24px 16px;">
+          <!-- Outer Card -->
+          <div style="background:#ffffff;border:1px solid #EFEAE1;border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.08);">
+            <!-- Header -->
+            <div style="padding:28px 28px 20px;background:linear-gradient(135deg,#111827 0%,#0B0B0B 100%);color:#fff;position:relative;">
+              <div style="opacity:0.08;position:absolute;inset:-120px auto auto -120px;width:320px;height:320px;border-radius:999px;background:#C5A059;filter:blur(60px);"></div>
+              <div style="position:relative;">
+                <div style="font-size:9px;letter-spacing:0.32em;text-transform:uppercase;color:rgba(255,255,255,0.7);font-weight:600;">
+                  Khushi Chauhan • Studio
+                </div>
+                <div style="margin-top:8px;font-size:22px;line-height:1.3;font-weight:800;letter-spacing:-0.02em;">
+                  Verify your email address
+                </div>
+                <div style="margin-top:8px;font-size:12px;line-height:1.7;color:rgba(255,255,255,0.75);">
+                  Hello ${safeName}, use the code below to complete your sign up.
+                </div>
+              </div>
+            </div>
+
+            <!-- Body -->
+            <div style="padding:20px 22px 10px;">
+              <div style="font-size:11px;letter-spacing:0.26em;text-transform:uppercase;color:#7A6F62;font-weight:700;">
+                Your one-time passcode
+              </div>
+
+              <!-- OTP Row -->
+              <div style="margin-top:12px;padding:16px 14px;background:linear-gradient(135deg,#FAF9F6 0%,#FFFFFF 100%);border:1px solid #EFEAE1;border-radius:14px;">
+                <div style="text-align:center;">
+                  ${otpDigits
+                    .map(
+                      (d) => `
+                        <span style="display:inline-block;width:40px;height:48px;line-height:48px;margin:0 4px;border-radius:10px;border:1px solid #EFEAE1;background:#ffffff;color:#111827;font-size:18px;font-weight:800;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;box-shadow:0 8px 24px rgba(0,0,0,0.06);">
+                          ${d}
+                        </span>
+                      `
+                    )
+                    .join("")}
+                </div>
+                <div style="margin-top:14px;text-align:center;font-size:12px;color:#6B7280;">
+                  Expires in <strong style="color:#111827;">10 minutes</strong>. If you didn’t request this, you can ignore this email.
+                </div>
+              </div>
+
+              <!-- Details -->
+                <div style="margin-top:18px;font-size:12px;line-height:1.8;color:#6B7280;">
+                <div><strong style="color:#111827;">Email:</strong> ${safeEmail}</div>
+                ${
+                  devOverrideTo && devOverrideTo !== safeEmail
+                    ? `<div><strong style="color:#111827;">Dev notice:</strong> Delivered to <span style="font-family:ui-monospace,Menlo,Monaco,Consolas,monospace">${devOverrideTo}</span> (Resend testing mode)</div>`
+                    : ""
+                }
+                <div><strong style="color:#111827;">Security tip:</strong> Never share your code with anyone.</div>
+              </div>
+
+              <div style="margin-top:18px;border-top:1px solid #F1EEE7;"></div>
+            </div>
+
+            <!-- Footer -->
+            <div style="padding:16px 28px 26px;color:#9CA3AF;">
+              <div style="font-size:10px;letter-spacing:0.25em;text-transform:uppercase;">
+                Ethereal Couture • Heritage Artistry
+              </div>
+              <div style="margin-top:8px;font-size:11px;line-height:1.7;">
+                © 2026 Khushi Chauhan Designer Studio
+              </div>
+            </div>
           </div>
 
-          <!-- Info section -->
-          <div style="background: #FFF9E6; padding: 15px; border-left: 4px solid #F59E0B; border-radius: 6px; margin: 0 0 30px 0;">
-            <p style="color: #92400E; margin: 0; font-size: 13px;"><strong>⏱️ Note:</strong> This code is valid for 10 minutes. Please don't share this code with anyone for security reasons.</p>
+          <!-- Small print -->
+          <div style="max-width:560px;margin:14px auto 0;color:#A8A29E;font-size:11px;line-height:1.6;text-align:center;">
+            Having trouble? Check your spam folder, or try requesting a new code.
           </div>
-
-          <!-- Footer text -->
-          <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 30px 0;">
-          
-          <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
-            If you didn't create this account, please ignore this email or <a href="mailto:${process.env.ADMIN_EMAIL}" style="color: #7C3AED; text-decoration: none; font-weight: 600;">contact us</a>.
-          </p>
-        </div>
-
-        <!-- Footer -->
-        <div style="background: #F9FAFB; padding: 20px; text-align: center; color: #999; font-size: 11px;">
-          <p style="margin: 0;">© 2026 BakeMasters. All rights reserved. | <a href="https://bakemasters.com" style="color: #7C3AED; text-decoration: none;">Visit Website</a></p>
         </div>
       </div>
     `;
 
-    await resend.emails.send({
-      from: "Bake Masters <noreply@bakemasters.in>",
-      to: email,
-      subject: "🧁 Verify Your BakeMasters Account - Code Inside",
-      html: emailBody,
+    const result = await resend.emails.send({
+      from: process.env.RESEND_FROM || "Khushi Chauhan Designer Studio <onboarding@resend.dev>",
+      to: [devOverrideTo || safeEmail],
+      subject: "Your verification code • Khushi Chauhan Designer Studio",
+      html,
+      text: previewText,
     });
-    return true;
+
+    if (result?.error) {
+      console.error("Resend error sending OTP email:", result.error);
+      return { ok: false, error: result.error?.message || "Email provider error" };
+    }
+
+    return { ok: true };
   } catch (error) {
     console.error("Error sending OTP email:", error);
-    return false;
+    return { ok: false, error: error instanceof Error ? error.message : "Unknown email error" };
   }
 };
 

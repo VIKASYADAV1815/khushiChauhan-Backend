@@ -17,8 +17,8 @@ const app = express();
 // origin list can include Render domain and later custom domains
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://ecommerce-bakers-layout-2.vercel.app',
-  'https://bakemasters.in',
+  'https://fashion-designer-one.vercel.app',
+  'https://khushichauhandesignerstudio.com',
   
   process.env.FRONTEND_URL,          // e.g. https://www.yoursite.com
 ].filter(Boolean);

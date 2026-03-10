@@ -1,5 +1,5 @@
 import express from "express";
-import { checkout, verifyPayment, getOrders, getOrdersByEmail } from "../controllers/orderController.js";
+import { checkout, verifyPayment, getOrders, getOrdersByEmail, getOrdersByUser } from "../controllers/orderController.js";
 
 const router = express.Router();
 
@@ -15,5 +15,8 @@ router.get("/by-email/:email", getOrdersByEmail);
 // 4️⃣ Get orders
 router.get("/", getOrders);           // Get all orders or orders by UUID (visitor)
 router.get("/:orderId", getOrders);   // Get single order by ID
+
+// Get orders by user ID
+router.get("/user/:userId", getOrdersByUser);
 
 export default router;

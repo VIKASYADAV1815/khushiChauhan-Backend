@@ -222,3 +222,19 @@ export const getOrdersByEmail = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+/**
+ * ===============================
+ * GET ORDERS BY USER
+ * ===============================
+ */
+export const getOrdersByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const orders = await Order.find({ "userInfo.id": userId }).sort({ createdAt: -1 });
+    res.status(200).json({ orders });
+  } catch (error) {
+    console.error("Error fetching orders by user:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};

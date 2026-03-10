@@ -16,9 +16,18 @@ export const sendOTP = async (req, res) => {
     const { email, name } = req.body;
 
     if (!email || !name) {
-      return res
-        .status(400)
-        .json({ message: "Email and name are required" });
+      return res.status(400).json({ message: "Email and name are required" });
+    }
+    const normalizedEmail = email.toLowerCase().trim();
+    const trimmedName = name.toString().trim();
+    if (!trimmedName) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(400).json({ message: "An account with this email already exists." });
     }
 
     // Generate OTP
@@ -28,20 +37,24 @@ export const sendOTP = async (req, res) => {
     const hashedOTP = await bcrypt.hash(otp, SALT_ROUNDS);
 
     // Delete any existing OTP for this email
-    await OTP.deleteMany({ email: email.toLowerCase() });
+    await OTP.deleteMany({ email: normalizedEmail });
 
     // Save new OTP (hashed)
     await OTP.create({
-      email: email.toLowerCase(),
+      email: normalizedEmail,
       otp: hashedOTP,
       purpose: "signup",
     });
 
     // Send OTP via email (send plain OTP to user)
-    const emailSent = await sendOTPEmail(email, otp, name);
+    const emailResult = await sendOTPEmail(normalizedEmail, otp, trimmedName);
 
-    if (!emailSent) {
-      return res.status(500).json({ message: "Failed to send OTP email" });
+    if (!emailResult?.ok) {
+      const suffix =
+        process.env.NODE_ENV === "development" && emailResult?.error
+          ? ` (${emailResult.error})`
+          : "";
+      return res.status(500).json({ message: `Failed to send OTP email. Please try again.${suffix}` });
     }
 
     return res.status(200).json({ ok: true, message: "OTP sent successfully" });
@@ -144,10 +157,14 @@ export const sendForgotPasswordOTP = async (req, res) => {
     });
 
     // Send OTP via email (send plain OTP to user)
-    const emailSent = await sendOTPEmail(email, otp, user.name);
+    const emailResult = await sendOTPEmail(normalizedEmail, otp, user.name);
 
-    if (!emailSent) {
-      return res.status(500).json({ message: "Failed to send OTP email" });
+    if (!emailResult?.ok) {
+      const suffix =
+        process.env.NODE_ENV === "development" && emailResult?.error
+          ? ` (${emailResult.error})`
+          : "";
+      return res.status(500).json({ message: `Failed to send OTP email${suffix}` });
     }
 
     return res.status(200).json({ ok: true, message: "OTP sent successfully to your email" });
@@ -224,18 +241,28 @@ export const resetPassword = async (req, res) => {
  */
 export const signup = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, otp } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !otp) {
       return res
         .status(400)
-        .json({ message: "Name, email, and password are required" });
+        .json({ message: "Name, email, password, and OTP are required" });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    console.log("Signup - Creating user with email:", normalizedEmail);
 
-    // Check if user already exists
+    // 1. Validate OTP
+    const otpRecord = await OTP.findOne({ email: normalizedEmail, purpose: "signup" });
+    if (!otpRecord) {
+      return res.status(400).json({ message: "Invalid or expired OTP. Please request a new one." });
+    }
+
+    const isOTPValid = await bcrypt.compare(otp, otpRecord.otp);
+    if (!isOTPValid) {
+      return res.status(400).json({ message: "Invalid OTP code." });
+    }
+
+    // Safeguard: Check if user already exists
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(409).json({
@@ -244,22 +271,25 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Hash password with bcrypt
+    // 2. Hash password
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    // Create new user
+    // 3. Create new user
     const newUser = await User.create({
       name: name.trim(),
       email: normalizedEmail,
       passwordHash,
-      isEmailVerified: false,
+      isEmailVerified: true, // Mark as verified since OTP was correct
     });
+
+    // 4. Clean up OTP
+    await OTP.deleteOne({ _id: otpRecord._id });
 
     console.log("User created successfully:", newUser._id);
 
     return res.status(201).json({
       ok: true,
-      message: "User created successfully. Please verify your email.",
+      message: "Account created successfully! You can now log in.",
       user: {
         id: newUser._id,
         name: newUser.name,
@@ -268,7 +298,7 @@ export const signup = async (req, res) => {
     });
   } catch (error) {
     console.error("Signup error:", error);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "An unexpected error occurred during signup." });
   }
 };
 
