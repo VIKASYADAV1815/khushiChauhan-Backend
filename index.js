@@ -62,6 +62,15 @@ app.get("/", (req, res) => {
   res.send("Backend is running");
 });
 
+// Basic routes for category pages so they don't 404
+app.get("/lehenga", (req, res) => {
+  res.send("Lehenga route is working");
+});
+
+app.get("/drape", (req, res) => {
+  res.send("Drape route is working");
+});
+
 
 // Start server
 const PORT = process.env.PORT || 4000;
