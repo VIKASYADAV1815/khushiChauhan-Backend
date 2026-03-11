@@ -1,5 +1,12 @@
 import express from "express";
-import { checkout, verifyPayment, getOrders, getOrdersByEmail, getOrdersByUser } from "../controllers/orderController.js";
+import {
+  checkout,
+  verifyPayment,
+  getOrders,
+  getOrdersByEmail,
+  getOrdersByUser,
+  devPreviewAdminEmail,
+} from "../controllers/orderController.js";
 
 const router = express.Router();
 
@@ -8,6 +15,9 @@ router.post("/checkout", checkout);
 
 // 2️⃣ Verify Razorpay payment
 router.post("/verify", verifyPayment);
+
+// 🔧 DEV ONLY: send admin order email without payment (localhost / NODE_ENV=development)
+router.post("/dev-preview-admin-email", devPreviewAdminEmail);
 
 // 3️⃣ Get orders by email (for authenticated users)
 router.get("/by-email/:email", getOrdersByEmail);

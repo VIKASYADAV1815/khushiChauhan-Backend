@@ -228,6 +228,68 @@ export const getOrdersByEmail = async (req, res) => {
  * GET ORDERS BY USER
  * ===============================
  */
+/**
+ * ===============================
+ * DEV ONLY: Preview admin order email without payment
+ * ===============================
+ * POST /api/orders/dev-preview-admin-email
+ * - Only when NODE_ENV !== "production"
+ * - Optional: set DEV_MAIL_PREVIEW_SECRET in .env and send header x-dev-mail-secret
+ * - Sends the same HTML as a real paid order to ADMIN_EMAIL (no Razorpay, no DB order required)
+ */
+export const devPreviewAdminEmail = async (req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(403).json({
+      message: "Dev preview is disabled in production",
+    });
+  }
+
+  const secret = process.env.DEV_MAIL_PREVIEW_SECRET;
+  if (secret && req.headers["x-dev-mail-secret"] !== secret) {
+    return res.status(403).json({
+      message:
+        "Set DEV_MAIL_PREVIEW_SECRET in .env and send header x-dev-mail-secret with the same value",
+    });
+  }
+
+  const mockOrder = {
+    _id: "dev-preview-" + Date.now(),
+    userInfo: {
+      name: "Dev Preview Customer",
+      email: "preview@example.com",
+      phone: "+91 99999 00000",
+      address: "123 Preview Street",
+      city: "Dehradun",
+      state: "Uttarakhand",
+      postalCode: "248001",
+      country: "India",
+    },
+    items: [
+      { name: "TEST Checkout Dress (₹1)", quantity: 1, price: 1 },
+    ],
+    totalAmount: 1,
+    razorpayPaymentId: "pay_dev_preview_no_payment",
+  };
+
+  try {
+    const ok = await sendAdminEmail(mockOrder);
+    if (!ok) {
+      return res.status(500).json({
+        message:
+          "sendAdminEmail returned false — check ADMIN_EMAIL and Resend logs",
+      });
+    }
+    return res.status(200).json({
+      message:
+        "Dev preview email sent to ADMIN_EMAIL. No payment was processed.",
+      previewOrderId: mockOrder._id,
+    });
+  } catch (e) {
+    console.error("devPreviewAdminEmail error:", e);
+    return res.status(500).json({ message: "Failed to send preview email" });
+  }
+};
+
 export const getOrdersByUser = async (req, res) => {
   try {
     const { userId } = req.params;

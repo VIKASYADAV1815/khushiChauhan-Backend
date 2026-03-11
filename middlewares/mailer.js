@@ -22,66 +22,47 @@ export const sendOTPEmail = async (email, otp, name) => {
     const safeName = (name || "").toString().trim() || "there";
     const safeEmail = (email || "").toString().trim();
     if (!safeEmail) return { ok: false, error: "Missing recipient email" };
-
-    // Resend "testing" mode only allows sending to a single verified recipient.
-    // In development, allow routing all OTP emails to a safe inbox.
-    const devOverrideTo =
-      process.env.NODE_ENV === "development" && process.env.RESEND_TEST_TO
-        ? process.env.RESEND_TEST_TO.toString().trim()
-        : "";
     const otpDigits = otp.toString().split("").slice(0, 6);
 
     const previewText = `Your Khushi Chauhan Designer Studio verification code is ${otpDigits.join("")}. This code expires in 10 minutes.`;
 
     const html = `
-      <div style="margin:0;padding:0;background:#FAF9F6;">
-        <div style="max-width:520px;margin:0 auto;padding:24px 16px;">
-          <!-- Outer Card -->
-          <div style="background:#ffffff;border:1px solid #EFEAE1;border-radius:20px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.08);">
-            <!-- Header -->
-            <div style="padding:26px 22px 18px;background:linear-gradient(135deg,#0B0B0B 0%,#111827 100%);color:#fff;position:relative;">
-              <div style="opacity:0.10;position:absolute;inset:-120px auto auto -140px;width:340px;height:340px;border-radius:999px;background:#C5A059;filter:blur(60px);"></div>
-              <div style="opacity:0.06;position:absolute;inset:auto -160px -180px auto;width:380px;height:380px;border-radius:999px;background:#ffffff;filter:blur(70px);"></div>
-              <div style="position:relative;">
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;">
-                  <tr>
-                    <td style="vertical-align:middle;">
-                      <div style="display:inline-block;width:38px;height:38px;border-radius:999px;background:rgba(197,160,89,0.16);border:1px solid rgba(197,160,89,0.35);text-align:center;line-height:38px;font-weight:800;letter-spacing:0.06em;">
-                        KC
-                      </div>
-                    </td>
-                    <td style="vertical-align:middle;padding-left:12px;">
-                      <div style="font-size:9px;letter-spacing:0.34em;text-transform:uppercase;color:rgba(255,255,255,0.72);font-weight:700;">
-                        Khushi Chauhan Designer Studio
-                      </div>
-                      <div style="margin-top:6px;font-size:21px;line-height:1.25;font-weight:800;letter-spacing:-0.02em;">
-                        Your verification code
-                      </div>
-                    </td>
-                  </tr>
-                </table>
-                <div style="margin-top:10px;font-size:12px;line-height:1.7;color:rgba(255,255,255,0.78);">
-                  Hello ${safeName}, enter this code to finish signing up. It expires in 10 minutes.
-                </div>
+      <div style="margin:0;padding:0;background:#F5F1EB;">
+        <div style="max-width:520px;margin:0 auto;padding:20px 12px;">
+          <!-- Card -->
+          <div style="background:#FFFFFF;border-radius:18px;border:1px solid #E7DFD3;box-shadow:0 18px 40px rgba(15,23,42,0.08);overflow:hidden;">
+            <!-- Brand / Logo -->
+            <div style="padding:18px 18px 10px;text-align:center;border-bottom:1px solid #F1E8DD;">
+              <img
+                src="https://pub-141831e61e69445289222976a15b6fb3.r2.dev/Image_to_url_V2/logo-imagetourl.cloud-1773202506998-lijpc5.png"
+                alt="Khushi Chauhan Designer Studio"
+                style="max-width:160px;height:auto;display:block;margin:0 auto 8px;border-radius:999px;"
+              />
+              <div style="font-size:10px;letter-spacing:0.26em;text-transform:uppercase;color:#9A7B4F;font-weight:600;">
+                KHUSHI CHAUHAN DESIGNER STUDIO
               </div>
             </div>
 
-            <!-- Body -->
-            <div style="padding:20px 22px 10px;">
-              <div style="font-size:11px;letter-spacing:0.26em;text-transform:uppercase;color:#7A6F62;font-weight:700;">
-                One-time passcode
+            <!-- Content -->
+            <div style="padding:18px 18px 16px;">
+              <div style="font-size:20px;line-height:1.3;font-weight:700;color:#111827;margin-bottom:4px;">
+                Your verification code
+              </div>
+              <div style="font-size:13px;line-height:1.6;color:#4B5563;margin-bottom:14px;">
+                Hello ${safeName}, use this one-time passcode to verify your email for
+                <span style="font-weight:600;color:#9A7B4F;">Khushi Chauhan Designer Studio</span>.
               </div>
 
               <!-- OTP Row -->
-              <div style="margin-top:12px;padding:14px 12px;background:linear-gradient(135deg,#FAF9F6 0%,#FFFFFF 100%);border:1px solid #EFEAE1;border-radius:16px;">
-                <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;border-collapse:separate;border-spacing:8px 0;">
+              <div style="padding:12px 10px;background:#FBF8F3;border-radius:14px;border:1px solid #E7DFD3;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;border-collapse:separate;border-spacing:6px 0;">
                   <tr>
                     ${otpDigits
                       .map(
                         (d) => `
                           <td style="padding:0;">
-                            <div style="width:44px;height:54px;line-height:54px;text-align:center;border-radius:14px;background:#ffffff;border:1px solid rgba(197,160,89,0.38);box-shadow:0 10px 30px rgba(17,24,39,0.08);">
-                              <span style="display:inline-block;font-size:20px;font-weight:900;letter-spacing:0.02em;color:#111827;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;">
+                            <div style="width:40px;height:50px;line-height:50px;text-align:center;border-radius:12px;background:#FFFFFF;border:1px solid rgba(154,123,79,0.45);box-shadow:0 10px 24px rgba(15,23,42,0.06);">
+                              <span style="display:inline-block;font-size:20px;font-weight:800;letter-spacing:0.08em;color:#111827;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;">
                                 ${d}
                               </span>
                             </div>
@@ -91,40 +72,33 @@ export const sendOTPEmail = async (email, otp, name) => {
                       .join("")}
                   </tr>
                 </table>
-
-                <div style="margin-top:14px;text-align:center;font-size:12px;color:#6B7280;">
-                  Expires in <strong style="color:#111827;">10 minutes</strong>. If you didn’t request this, you can ignore this email.
+                <div style="margin-top:10px;text-align:center;font-size:12px;color:#4B5563;">
+                  Expires in <strong style="color:#111827;">10 minutes</strong>. If you didn’t request this, you can safely ignore this email.
                 </div>
               </div>
 
-              <!-- Details -->
-                <div style="margin-top:18px;font-size:12px;line-height:1.8;color:#6B7280;">
-                <div><strong style="color:#111827;">Email:</strong> ${safeEmail}</div>
-                ${
-                  devOverrideTo && devOverrideTo !== safeEmail
-                    ? `<div><strong style="color:#111827;">Dev notice:</strong> Delivered to <span style="font-family:ui-monospace,Menlo,Monaco,Consolas,monospace">${devOverrideTo}</span> (Resend testing mode)</div>`
-                    : ""
-                }
-                <div><strong style="color:#111827;">Security tip:</strong> Never share your code with anyone.</div>
+              <!-- Meta -->
+              <div style="margin-top:14px;font-size:12px;line-height:1.7;color:#6B7280;">
+                <div>
+                  <strong style="color:#111827;">Sent to:</strong>
+                  <span style="font-family:ui-monospace,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;">${safeEmail}</span>
+                </div>
+                <div style="margin-top:4px;">
+                  <strong style="color:#111827;">Security tip:</strong>
+                  Never share this code with anyone. Khushi Chauhan Designer Studio will never ask you for your OTP.
+                </div>
               </div>
-
-              <div style="margin-top:16px;border-top:1px solid #F1EEE7;"></div>
             </div>
 
             <!-- Footer -->
-            <div style="padding:14px 22px 22px;color:#9CA3AF;">
-              <div style="font-size:10px;letter-spacing:0.25em;text-transform:uppercase;">
-                Ethereal Couture • Heritage Artistry
+            <div style="padding:10px 16px 14px;border-top:1px solid #F3EBE0;text-align:center;color:#9CA3AF;">
+              <div style="font-size:11px;line-height:1.6;">
+                Having trouble? Check your spam or promotions folder, or request a new code from the verification screen.
               </div>
-              <div style="margin-top:8px;font-size:11px;line-height:1.7;">
+              <div style="margin-top:6px;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#A8A29E;">
                 © 2026 Khushi Chauhan Designer Studio
               </div>
             </div>
-          </div>
-
-          <!-- Small print -->
-          <div style="max-width:520px;margin:14px auto 0;color:#A8A29E;font-size:11px;line-height:1.6;text-align:center;">
-            Having trouble? Check spam/junk, or request a fresh code from the OTP screen.
           </div>
         </div>
       </div>
@@ -132,7 +106,8 @@ export const sendOTPEmail = async (email, otp, name) => {
 
     const result = await resend.emails.send({
       from: process.env.RESEND_FROM || "Khushi Chauhan Designer Studio <onboarding@resend.dev>",
-      to: [devOverrideTo || safeEmail],
+      // Now always send to the actual email entered by the user
+      to: [safeEmail],
       subject: "Your verification code • Khushi Chauhan Designer Studio",
       html,
       text: previewText,

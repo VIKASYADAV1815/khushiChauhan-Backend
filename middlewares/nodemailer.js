@@ -7,80 +7,106 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendAdminEmail = async (order) => {
   try {
+    const adminRecipients = (process.env.ADMIN_EMAIL || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (!adminRecipients.length) {
+      console.warn("ADMIN_EMAIL is not configured; admin order email not sent.");
+      return false;
+    }
+
     const emailBody = `
-      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 700px; margin: 0 auto;">
-        <!-- Header -->
-        <div style="background: linear-gradient(135deg, #1A1A1A 0%, #333333 100%); padding: 40px 20px; text-align: center; color: white; border-radius: 12px 12px 0 0;">
-          <h1 style="margin: 0; font-size: 28px; font-weight: 700;">✨ New Order Received!</h1>
-          <p style="margin: 8px 0 0 0; font-size: 14px; opacity: 0.9;">A luxury couture piece is waiting to be prepared</p>
+      <div style="font-family: 'Georgia', 'Times New Roman', serif; max-width: 620px; margin: 0 auto; background: #FFFDFB;">
+        <!-- Top accent -->
+        <div style="height: 4px; background: linear-gradient(90deg, #E29578 0%, #C5A059 50%, #1A1A1A 100%);"></div>
+
+        <!-- Header - elegant minimal -->
+        <div style="padding: 36px 28px 28px; text-align: center; border-bottom: 1px solid #F5EBE0;">
+          <p style="margin: 0 0 6px 0; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: #E29578; font-weight: 600;">New Order</p>
+          <h1 style="margin: 0; font-size: 26px; font-weight: 400; color: #1A1A1A; letter-spacing: 0.02em;">A new order has been placed</h1>
+          <p style="margin: 10px 0 0 0; font-size: 13px; color: #6B6B6B;">Khushi Chauhan Designer Studio</p>
         </div>
 
-        <!-- Main content -->
-        <div style="background: white; padding: 30px; border: 1px solid #E5E7EB; border-top: none;">
-          
-          <!-- Order ID Alert -->
-          <div style="background: #F0F9FF; border-left: 4px solid #1A1A1A; padding: 16px; border-radius: 6px; margin-bottom: 25px;">
-            <p style="margin: 0; color: #1E40AF; font-weight: 600; font-size: 16;">Order ID: <span style="font-family: monospace; background: white; padding: 2px 6px; border-radius: 4px;">${order._id}</span></p>
-          </div>
+        <!-- Order ID - subtle highlight -->
+        <div style="margin: 24px 28px 0; padding: 14px 18px; background: #FDF8F5; border-radius: 6px; border-left: 3px solid #E29578;">
+          <p style="margin: 0; font-size: 12px; color: #6B6B6B; letter-spacing: 0.05em;">Order ID</p>
+          <p style="margin: 4px 0 0 0; font-size: 15px; font-weight: 600; color: #1A1A1A; font-family: 'Consolas', monospace;">${order._id}</p>
+        </div>
 
-          <!-- Customer Section -->
-          <h2 style="color: #1A1A1A; font-size: 16px; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 1px;">📋 Customer Information</h2>
-          <div style="background: #F9FAFB; padding: 16px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #C5A059;">
-            <p style="margin: 8px 0; color: #333; font-size: 14px;"><strong>Name:</strong> ${order.userInfo.name}</p>
-            <p style="margin: 8px 0; color: #333; font-size: 14px;"><strong>Email:</strong> <a href="mailto:${order.userInfo.email}" style="color: #1A1A1A; text-decoration: none;">${order.userInfo.email}</a></p>
-            <p style="margin: 8px 0; color: #333; font-size: 14px;"><strong>Phone:</strong> ${order.userInfo.phone}</p>
-          </div>
+        <!-- Customer -->
+        <div style="margin: 24px 28px 0; padding: 0 0 20px; border-bottom: 1px solid #F5EBE0;">
+          <p style="margin: 0 0 12px 0; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #8C8C8C;">Customer</p>
+          <p style="margin: 0; font-size: 15px; color: #1A1A1A; line-height: 1.6;"><strong>${order.userInfo.name}</strong></p>
+          <p style="margin: 6px 0 0 0; font-size: 14px; color: #333;"><a href="mailto:${order.userInfo.email}" style="color: #E29578; text-decoration: none;">${order.userInfo.email}</a></p>
+          <p style="margin: 4px 0 0 0; font-size: 14px; color: #333;">${order.userInfo.phone}</p>
+        </div>
 
-          <!-- Delivery Address Section -->
-          <h2 style="color: #1A1A1A; font-size: 16px; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 1px;">📍 Delivery Address</h2>
-          <div style="background: #F9FAFB; padding: 16px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #1A1A1A;">
-            <p style="margin: 0; color: #333; font-size: 14px; line-height: 1.6;">
-              ${order.userInfo.address}<br>
-              ${order.userInfo.city}, ${order.userInfo.country} - ${order.userInfo.postalCode}
-            </p>
-          </div>
-
-          <!-- Items Section -->
-          <h2 style="color: #1A1A1A; font-size: 16px; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 1px;">🛒 Items Ordered</h2>
-          <ul style="background: #F9FAFB; padding: 20px; border-radius: 8px; border-left: 4px solid #1A1A1A; margin-bottom: 25px; list-style: none; margin: 0 0 25px 0;">
-            ${order.items.map(item => `<li style="margin: 10px 0; color: #333; font-size: 14px; padding-bottom: 10px; border-bottom: 1px solid #E5E7EB;"><strong>${item.name}</strong> - ${item.quantity} × ₹${item.price} = <span style="color: #1A1A1A; font-weight: 600;">₹${item.quantity * item.price}</span></li>`).join("")}
-          </ul>
-
-          <!-- Payment Section -->
-          <div style="background: linear-gradient(135deg, #FAF9F6 0%, #F5F5F5 100%); padding: 20px; border-radius: 8px; border: 2px solid #1A1A1A; margin-bottom: 25px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 18px; font-weight: 600; color: #333;">Order Total:</span>
-              <span style="font-size: 28px; font-weight: 800; color: #1A1A1A;">₹${order.totalAmount}</span>
-            </div>
-            <hr style="border: none; border-top: 1px solid #D8BFD8; margin: 15px 0;">
-            <p style="margin: 0; color: #666; font-size: 13px;"><strong>📲 Payment ID:</strong> ${order.razorpayPaymentId}</p>
-          </div>
-
-          <!-- Action Button -->
-          <div style="text-align: center; margin-bottom: 25px;">
-            <a href="${process.env.ADMIN_PANEL_URL || '#'}" style="background: linear-gradient(135deg, #1A1A1A 0%, #333333 100%); color: white; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; display: inline-block; font-size: 14px;">View Order Details</a>
-          </div>
-
-          <hr style="border: none; border-top: 1px solid #E5E7EB; margin: 25px 0;">
-          
-          <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
-            This is an automated notification. Please do not reply to this email.
+        <!-- Delivery Address -->
+        <div style="margin: 20px 28px 0; padding: 0 0 20px; border-bottom: 1px solid #F5EBE0;">
+          <p style="margin: 0 0 12px 0; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #8C8C8C;">Delivery Address</p>
+          <p style="margin: 0; font-size: 14px; color: #333; line-height: 1.65;">
+            ${order.userInfo.address}<br>
+            ${order.userInfo.city}, ${order.userInfo.state} ${order.userInfo.postalCode}<br>
+            ${order.userInfo.country}
           </p>
         </div>
 
-        <!-- Footer -->
-        <div style="background: #F9FAFB; padding: 20px; text-align: center; color: #999; font-size: 11px; border-radius: 0 0 12px 12px; border: 1px solid #E5E7EB; border-top: none;">
-          <p style="margin: 0;">© 2026 Khushi Chauhan Designer Studio</p>
+        <!-- Items -->
+        <div style="margin: 20px 28px 0; padding: 0 0 20px; border-bottom: 1px solid #F5EBE0;">
+          <p style="margin: 0 0 14px 0; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #8C8C8C;">Items</p>
+          <table style="width: 100%; border-collapse: collapse;">
+            ${order.items.map(
+              (item) => `
+            <tr style="border-bottom: 1px solid #F0EBE6;">
+              <td style="padding: 10px 0; font-size: 14px; color: #1A1A1A;">${item.name}</td>
+              <td style="padding: 10px 0; font-size: 14px; color: #333; text-align: right;">${item.quantity} × ₹${item.price}</td>
+              <td style="padding: 10px 0; font-size: 14px; font-weight: 600; color: #1A1A1A; text-align: right;">₹${item.quantity * item.price}</td>
+            </tr>`
+            ).join("")}
+          </table>
         </div>
+
+        <!-- Total & Payment -->
+        <div style="margin: 20px 28px 0; padding: 20px; background: linear-gradient(135deg, #1A1A1A 0%, #2d2d2d 100%); border-radius: 8px;">
+          <table style="width: 100%;">
+            <tr>
+              <td style="font-size: 14px; color: rgba(255,255,255,0.9);">Order Total</td>
+              <td style="font-size: 22px; font-weight: 600; color: #FFF; text-align: right;">₹${order.totalAmount}</td>
+            </tr>
+            <tr>
+              <td colspan="2" style="padding-top: 10px; font-size: 12px; color: rgba(255,255,255,0.7);">Payment ID: ${order.razorpayPaymentId}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- View Order Details - commented out until admin panel is ready -->
+        <!-- <div style="text-align: center; margin: 28px 28px 0;">
+          <a href="${process.env.ADMIN_PANEL_URL || '#'}" style="display: inline-block; background: #1A1A1A; color: white; padding: 14px 28px; text-decoration: none; font-size: 12px; letter-spacing: 0.15em; text-transform: uppercase;">View Order Details</a>
+        </div> -->
+
+        <!-- Footer -->
+        <div style="margin: 32px 28px 24px; padding-top: 20px; border-top: 1px solid #F5EBE0; text-align: center;">
+          <p style="margin: 0; font-size: 11px; color: #999;">Automated notification · Khushi Chauhan Designer Studio</p>
+          <p style="margin: 6px 0 0 0; font-size: 10px; color: #BBB;">© 2026</p>
+        </div>
+
+        <!-- Bottom accent -->
+        <div style="height: 4px; background: linear-gradient(90deg, #1A1A1A 0%, #C5A059 50%, #E29578 100%);"></div>
       </div>
     `;
 
     await resend.emails.send({
-      from: "Khushi Chauhan <onboarding@resend.dev>",
-      to: "vikasrankmantra@gmail.com",
-      subject: `✨ New Order Received - ${order._id}`,
+      from:
+        process.env.RESEND_FROM_ADMIN ||
+        process.env.RESEND_FROM ||
+        "Khushi Chauhan Designer Studio <onboarding@resend.dev>",
+      to: adminRecipients,
+      subject: `New order — ${order._id} · Khushi Chauhan Designer Studio`,
       html: emailBody,
     });
+
     return true;
   } catch (error) {
     console.error("Error sending admin email:", error);
