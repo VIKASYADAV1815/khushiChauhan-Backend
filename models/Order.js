@@ -11,6 +11,7 @@ const OrderSchema = new mongoose.Schema(
 
     // Customer delivery info
     userInfo: {
+      id: { type: String }, // optional user ID
       name: { type: String, required: true },
       phone: { type: String, required: true },
       email: { type: String }, // optional

@@ -316,6 +316,7 @@ export const login = async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const normalizedPassword = password.toString().trim();
     console.log("Login attempt - Email:", normalizedEmail);
 
     // Find user by email
@@ -332,7 +333,7 @@ export const login = async (req, res) => {
     console.log("User found, checking password...");
 
     // Compare password with hashed password
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(normalizedPassword, user.passwordHash);
 
     if (!isPasswordValid) {
       console.log("Login failed - Invalid password");

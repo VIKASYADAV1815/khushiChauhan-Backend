@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 
 import Order from "../models/Order.js";
 import Cart from "../models/Cart.js";
-import { sendAdminEmail } from "../middlewares/nodemailer.js";
+import { sendAdminEmail, sendCustomerEmail } from "../middlewares/nodemailer.js";
 
 dotenv.config();
 
@@ -146,12 +146,19 @@ export const verifyPayment = async (req, res) => {
       await Cart.findOneAndDelete({ uuid });
     }
 
-    // 📧 Notify admin
-    await sendAdminEmail(order);
+    // 📧 Notify admin & customer
+    const [adminOk, customerOk] = await Promise.all([
+      sendAdminEmail(order),
+      sendCustomerEmail(order)
+    ]);
+
+    if (!adminOk) console.error(`Failed to send admin notification for order ${order._id}`);
+    if (!customerOk) console.error(`Failed to send customer notification for order ${order._id}`);
 
     return res.status(200).json({
       message: "Payment verified successfully",
       order,
+      emailStatus: { admin: adminOk, customer: customerOk }
     });
   } catch (error) {
     console.error("Verify payment error:", error);
@@ -238,13 +245,14 @@ export const getOrdersByEmail = async (req, res) => {
  * - Sends the same HTML as a real paid order to ADMIN_EMAIL (no Razorpay, no DB order required)
  */
 export const devPreviewAdminEmail = async (req, res) => {
-  if (process.env.NODE_ENV === "production") {
+  const secret = process.env.DEV_MAIL_PREVIEW_SECRET;
+
+  if (process.env.NODE_ENV === "production" && !secret) {
     return res.status(403).json({
-      message: "Dev preview is disabled in production",
+      message: "Dev preview is disabled in production unless DEV_MAIL_PREVIEW_SECRET is set.",
     });
   }
 
-  const secret = process.env.DEV_MAIL_PREVIEW_SECRET;
   if (secret && req.headers["x-dev-mail-secret"] !== secret) {
     return res.status(403).json({
       message:
@@ -256,7 +264,7 @@ export const devPreviewAdminEmail = async (req, res) => {
     _id: "dev-preview-" + Date.now(),
     userInfo: {
       name: "Dev Preview Customer",
-      email: "preview@example.com",
+      email: "vikasrankmantra@gmail.com",
       phone: "+91 99999 00000",
       address: "123 Preview Street",
       city: "Dehradun",
@@ -265,23 +273,28 @@ export const devPreviewAdminEmail = async (req, res) => {
       country: "India",
     },
     items: [
-      { name: "TEST Checkout Dress (₹1)", quantity: 1, price: 1 },
+      { name: "TEST Checkout Dress (₹1)", quantity: 1, price: 1, image: "https://khushichauhandesignerstudio.com/lehanga/corset.jpeg" },
     ],
     totalAmount: 1,
     razorpayPaymentId: "pay_dev_preview_no_payment",
   };
 
   try {
-    const ok = await sendAdminEmail(mockOrder);
-    if (!ok) {
+    const [adminOk, customerOk] = await Promise.all([
+      sendAdminEmail(mockOrder),
+      sendCustomerEmail(mockOrder)
+    ]);
+
+    if (!adminOk || !customerOk) {
       return res.status(500).json({
         message:
-          "sendAdminEmail returned false — check ADMIN_EMAIL and Resend logs",
+          "Email sending failed — check ADMIN_EMAIL and Resend logs",
+        status: { admin: adminOk, customer: customerOk }
       });
     }
     return res.status(200).json({
       message:
-        "Dev preview email sent to ADMIN_EMAIL. No payment was processed.",
+        "Dev preview emails sent to ADMIN_EMAIL and CUSTOMER_EMAIL. No payment was processed.",
       previewOrderId: mockOrder._id,
     });
   } catch (e) {
