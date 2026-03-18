@@ -66,17 +66,24 @@ export const sendAdminEmail = async (order) => {
       return false;
     }
 
+    const baseUrl = process.env.FRONTEND_URL || "https://khushichauhandesignerstudio.com";
+
     const itemsRows = (order.items || [])
       .map(
-        (item) => `
+        (item) => {
+          const imageUrl = item.image && !item.image.startsWith('http')
+            ? `${baseUrl}${item.image.startsWith('/') ? '' : '/'}${item.image}`
+            : item.image;
+
+          return `
           <tr style="border-bottom: 1px solid #F1E8DD;">
             <td style="padding: 20px 0; vertical-align: top;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
                 <tr>
                   <td style="width: 100px; padding-right: 20px; vertical-align: top;">
                     ${
-                      item.image
-                        ? `<img src="${item.image}" alt="${item.name}" width="100" height="125" style="display:block;border-radius:12px;object-fit:cover;border:1px solid #E7DFD3;" />`
+                      imageUrl
+                        ? `<img src="${imageUrl}" alt="${item.name}" width="100" height="125" style="display:block;border-radius:12px;object-fit:cover;border:1px solid #E7DFD3;" />`
                         : `<div style="width:100px;height:125px;border-radius:12px;background:#FBF8F3;border:1px solid #E7DFD3;"></div>`
                     }
                   </td>
@@ -91,7 +98,8 @@ export const sendAdminEmail = async (order) => {
             <td style="padding: 20px 0; font-size: 16px; font-weight: 700; color: #111827; text-align: right; vertical-align: top; padding-top: 28px;">
               ₹${formatINR((item.quantity || 0) * (item.price || 0))}
             </td>
-          </tr>`
+          </tr>`;
+        }
       )
       .join("");
 
@@ -185,17 +193,24 @@ export const sendCustomerEmail = async (order) => {
   try {
     if (!order.userInfo?.email) return false;
 
+    const baseUrl = process.env.FRONTEND_URL || "https://khushichauhandesignerstudio.com";
+
     const itemsRows = (order.items || [])
       .map(
-        (item) => `
+        (item) => {
+          const imageUrl = item.image && !item.image.startsWith('http')
+            ? `${baseUrl}${item.image.startsWith('/') ? '' : '/'}${item.image}`
+            : item.image;
+
+          return `
           <tr style="border-bottom: 1px solid #F1E8DD;">
             <td style="padding: 20px 0; vertical-align: top;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
                 <tr>
                   <td style="width: 100px; padding-right: 20px; vertical-align: top;">
                     ${
-                      item.image
-                        ? `<img src="${item.image}" alt="${item.name}" width="100" height="125" style="display:block;border-radius:12px;object-fit:cover;border:1px solid #E7DFD3;" />`
+                      imageUrl
+                        ? `<img src="${imageUrl}" alt="${item.name}" width="100" height="125" style="display:block;border-radius:12px;object-fit:cover;border:1px solid #E7DFD3;" />`
                         : `<div style="width:100px;height:125px;border-radius:12px;background:#FBF8F3;border:1px solid #E7DFD3;"></div>`
                     }
                   </td>
@@ -209,7 +224,8 @@ export const sendCustomerEmail = async (order) => {
             <td style="padding: 20px 0; font-size: 16px; font-weight: 700; color: #111827; text-align: right; vertical-align: top; padding-top: 28px;">
               ₹${formatINR((item.quantity || 0) * (item.price || 0))}
             </td>
-          </tr>`
+          </tr>`;
+        }
       )
       .join("");
 
