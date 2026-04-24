@@ -8,6 +8,7 @@ import {
   login,
   markEmailVerified,
   debugCheckUser,
+  listUsers,
 } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -27,5 +28,8 @@ router.post("/reset-password", resetPassword);           // Verify OTP and reset
 
 // Debug endpoint
 router.post("/debug-check-user", debugCheckUser);        // Check if user exists in DB
+
+// Admin read endpoint
+router.get("/users", listUsers);
 
 export default router;

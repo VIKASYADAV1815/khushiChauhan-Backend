@@ -431,3 +431,25 @@ export const debugCheckUser = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+/**
+ * List users (admin-facing read endpoint)
+ */
+export const listUsers = async (req, res) => {
+  try {
+    const users = await User.find(
+      {},
+      {
+        name: 1,
+        email: 1,
+        phone: 1,
+        createdAt: 1,
+      }
+    ).sort({ createdAt: -1 });
+
+    return res.status(200).json({ users });
+  } catch (error) {
+    console.error("List users error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

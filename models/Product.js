@@ -1,24 +1,84 @@
 import mongoose from "mongoose";
 
-const ProductSchema = new mongoose.Schema(
+const productSchema = new mongoose.Schema(
   {
-    id: { type: String, required: true, unique: true },
-    slug: { type: String, required: true, unique: true },
-    name: { type: String, required: true },
-    tagline: { type: String },
-    price: { type: Number, required: true },
-    category: { type: String, required: true },
-    subCategory: { type: String },
-    image: { type: String, required: true },
-    isOutOfStock: { type: Boolean, default: false },
-    images: { type: [String] },
-    video: { type: String },
-    description: { type: String },
-    details: { type: [String] },
-    studio: {
-      name: { type: String },
-      address: { type: String },
-      landmark: { type: String },
+    id: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    tagline: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    category: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    subCategory: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    image: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    images: {
+      type: [String],
+      default: [],
+    },
+    video: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    description: {
+      type: String,
+      default: "",
+    },
+    details: {
+      type: [String],
+      default: [],
+    },
+    stock: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    minStockLevel: {
+      type: Number,
+      default: 5,
+      min: 0,
+    },
+    isOutOfStock: {
+      type: Boolean,
+      default: false,
+    },
+    notes: {
+      type: String,
+      default: "",
     },
   },
   {
@@ -27,4 +87,20 @@ const ProductSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.models.Product || mongoose.model("Product", ProductSchema);
+productSchema.pre("validate", function onValidate(next) {
+  if (!this.id && this.slug) {
+    this.id = this.slug;
+  }
+
+  this.isOutOfStock = this.stock <= 0;
+
+  if (!this.image && this.images?.length) {
+    this.image = this.images[0];
+  }
+
+  next();
+});
+
+export default mongoose.models.Product ||
+  mongoose.model("Product", productSchema);
+ 

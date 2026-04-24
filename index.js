@@ -8,6 +8,7 @@ import connectDB from './libs/db.js';
 import cartRoutes from './routes/cartRoutes.js'; // <-- added
 import orderRoutes from "./routes/orderRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
 
 import { generateUuid } from './middlewares/generateUuid.js'; // <-- added
 
@@ -55,6 +56,7 @@ app.use(generateUuid)
 app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/products", productRoutes);
 
 
 // Health route (Render)
