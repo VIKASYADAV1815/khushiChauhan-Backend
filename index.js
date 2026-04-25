@@ -17,26 +17,31 @@ const app = express();
 // Middlewares
 // Origin list can include Render domain and later custom domains
 const allowedOrigins = [
-  process.env.FRONTEND_URL, // e.g. https://khushichauhandesignerstudio.com
-  process.env.FRONTEND_URL_WWW, // e.g. https://www.khushichauhandesignerstudio.com (optional)
+  process.env.FRONTEND_URL, 
+  process.env.FRONTEND_URL_WWW,
+  "http://localhost:3000",
+  "https://khushichauhandesignerstudio.com",
+  "https://www.khushichauhandesignerstudio.com"
 ].filter(Boolean);
-
-if (process.env.NODE_ENV !== "production") {
-  allowedOrigins.push("http://localhost:3000");
-}
 
 app.use(cors({
   origin: (origin, callback) => {
     // allow requests with no origin (like Postman)
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
+    // Check if origin is in allowed list or is a subdomain of our main domain
+    const isAllowed = allowedOrigins.includes(origin) || 
+                     origin.endsWith(".khushichauhandesignerstudio.com") ||
+                     origin.includes("localhost");
+
+    if (isAllowed) {
       callback(null, true);
     } else {
+      console.log("Blocked by CORS: ", origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true, // allow cookies
+  credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser()); // <-- needed to read cookies
