@@ -101,6 +101,26 @@ export const getProducts = async (req, res) => {
   }
 };
 
+export const getProductBySlug = async (req, res) => {
+  try {
+    const slug = String(req.params.slug || "").trim().toLowerCase();
+
+    if (!slug) {
+      return res.status(400).json({ message: "slug is required" });
+    }
+
+    const product = await Product.findOne({ slug });
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    return res.status(200).json({ product });
+  } catch (error) {
+    console.error("Get product by slug error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 export const createProduct = async (req, res) => {
   try {
     if (!hasCloudinaryConfig()) {
